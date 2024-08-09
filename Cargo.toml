@@ -8,3 +8,4 @@ xcb = "~1.4.0"
 png = "~0.17.13"
 anyhow = { version = "~1.0.86", features = ["backtrace"] }
 thiserror = "~1.0.63"
+eframe = "~0.28.1"
