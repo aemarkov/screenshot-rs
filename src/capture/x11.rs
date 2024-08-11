@@ -1,14 +1,14 @@
 //! This module implements ScreenCapture trait for X11
 
 use crate::capture::ScreenCapture;
-use crate::image::{Image, Size};
 use anyhow::{anyhow, Result};
+use image::RgbaImage;
 use xcb::x;
 
 pub struct X11Capture;
 
 impl ScreenCapture for X11Capture {
-    fn all() -> Result<Image> {
+    fn all() -> Result<RgbaImage> {
         // TODO: this is a common code, need to be extracted to the method
         // However, we have to keep conn, setup and screen objects, because they
         // borrows conn. Too many objects to return from method.
@@ -21,15 +21,11 @@ impl ScreenCapture for X11Capture {
         let root = screen.root();
 
         let (geom, buffer) = Self::capture(&conn, &root)?;
+        // TODO: probably, there is a better and faster way to swap channels
         let buffer = Self::bgra2rgba(buffer.data());
 
-        Ok(Image {
-            data: buffer,
-            size: Size {
-                width: geom.width().into(),
-                height: geom.height().into(),
-            },
-        })
+        RgbaImage::from_raw(geom.width().into(), geom.height().into(), buffer)
+            .ok_or_else(|| anyhow!("Failed to create image"))
     }
 }
 

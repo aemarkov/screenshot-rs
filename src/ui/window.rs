@@ -1,18 +1,43 @@
 //! Main application window
 
-use eframe::egui::{self, Layout, Ui};
+use eframe::egui::{self, Layout, TextureHandle, Ui};
+use image::RgbaImage;
 
 #[derive(Default)]
-pub struct ScreenshotEditor {}
+pub struct ScreenshotEditor {
+    image: RgbaImage,
+    texture: Option<TextureHandle>,
+}
 
 impl ScreenshotEditor {
-    pub fn new(_: &eframe::CreationContext<'_>) -> Self {
-        Self::default()
+    pub fn new(_: &eframe::CreationContext<'_>, image: RgbaImage) -> Self {
+        Self {
+            image,
+            texture: None,
+        }
     }
 }
 
 impl eframe::App for ScreenshotEditor {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        let texture = self.texture.get_or_insert_with(|| {
+            // Texture should be loaded once
+
+            // NOTE: maybe it's better to create own dumb container for pixel data rather than
+            // converting &[u8] -> Vec -> Image -> back into &[8]
+            let size = [self.image.width() as usize, self.image.height() as usize];
+            let pixels = self.image.as_flat_samples();
+            let image = egui::ColorImage::from_rgba_unmultiplied(
+                size,
+                pixels.as_slice(),
+            );
+
+            ctx.load_texture(
+                "screenshot-texture",
+                image,
+                Default::default())
+        });
+
         egui::SidePanel::left("left")
             .resizable(false)
             .default_width(80.0)
@@ -36,7 +61,12 @@ impl eframe::App for ScreenshotEditor {
                 });
             });
 
-        egui::CentralPanel::default().show(ctx, |_ui| {});
+        egui::CentralPanel::default()
+        .frame(egui::Frame::none())
+        .show(ctx, |ui| {
+            // we load texture at first update() call, so for now it should be loaded
+            ui.image((texture.id(), texture.size_vec2()));
+        });
     }
 }
 

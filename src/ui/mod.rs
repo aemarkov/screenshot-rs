@@ -1,9 +1,11 @@
 mod window;
 
 use eframe::egui;
+use image::RgbaImage;
 
 /// Run the GUI
-pub fn run() {
+/// Displays captured screenshot `image` in an editor window
+pub fn show_editor(image: RgbaImage) {
     let native_options = eframe::NativeOptions::default();
     let _ = eframe::run_native(
         "Screenshot editor",
@@ -14,7 +16,7 @@ pub fn run() {
                 ..egui::Style::default()
             };
             cc.egui_ctx.set_style(style);
-            Ok(Box::new(window::ScreenshotEditor::new(cc)))
+            Ok(Box::new(window::ScreenshotEditor::new(cc, image)))
         }),
     );
 }
